@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BBC Heaven - Radio Player</title>
+    <script src="https://cdn.dashjs.org/latest/modern/umd/dash.all.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        min-height: 100vh;
+        line-height: 1.6;
+        padding-bottom: 180px; /* Mobile-first footer space */
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem; /* Mobile-first padding */
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 2rem; /* Reduced for mobile */
+      }
+
+      .header h1 {
+        font-size: 2rem; /* Mobile-first size */
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+
+      .header p {
+        font-size: 1rem; /* Mobile-first size */
+        color: #64748b;
+        font-style: italic;
+      }
+
+      .search-container {
+        position: relative;
+        margin-bottom: 1.5rem; /* Mobile-first spacing */
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 0.75rem;
+        color: #f8fafc;
+        font-size: 1rem;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+
+      .search-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1.25rem;
+        height: 1.25rem;
+        color: #64748b;
+        pointer-events: none;
+      }
+
+      .stations-grid {
+        display: grid;
+        grid-template-columns: 1fr; /* Mobile-first: single column */
+        gap: 1rem; /* Mobile-first spacing */
+        margin-bottom: 1rem;
+      }
+
+      .station-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 1rem;
+        padding: 1.25rem; /* Mobile-optimized padding */
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        min-height: 80px; /* Ensure good touch targets */
+      }
+
+      .station-card:hover,
+      .station-card:active {
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .station-card.active {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #1e40af, #3730a3);
+      }
+
+      .station-name {
+        font-size: 1.125rem; /* Mobile-optimized */
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #f8fafc;
+      }
+
+      .station-description {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        line-height: 1.4;
+      }
+
+      .station-card.active .station-description {
+        color: #e2e8f0;
+      }
+
+      .player-section {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(30, 41, 59, 0.95);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid #334155;
+        padding: 1rem; /* Mobile-first padding */
+        z-index: 50;
+        box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .player-header {
+        text-align: center;
+        margin-bottom: 1rem; /* Mobile-first spacing */
+      }
+
+      .current-station {
+        font-size: 1.125rem; /* Mobile-optimized */
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #f8fafc;
+      }
+
+      .status {
+        font-size: 0.875rem; /* Mobile-optimized */
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .status.playing {
+        color: #22c55e;
+      }
+
+      .status-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+      }
+
+      .loading {
+        display: none;
+        color: #3b82f6;
+        font-style: italic;
+      }
+
+      .error {
+        display: none;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem; /* Mobile-first spacing */
+      }
+
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem 1.5rem; /* Larger touch targets */
+        border: none;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 120px;
+        min-height: 48px; /* Ensure good touch targets */
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled),
+      .btn-primary:active:not(:disabled) {
+        background: #2563eb;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: #374151;
+        color: white;
+        border: 1px solid #4b5563;
+      }
+
+      .btn-secondary:hover:not(:disabled),
+      .btn-secondary:active:not(:disabled) {
+        background: #4b5563;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-icon {
+        width: 1.5rem; /* Larger icons for mobile */
+        height: 1.5rem;
+      }
+
+      .volume-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+      }
+
+      .volume-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: #64748b;
+      }
+
+      .volume-slider {
+        flex: 1;
+        max-width: 200px;
+        height: 0.5rem;
+        background: #334155;
+        border-radius: 0.25rem;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        background: #3b82f6;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .volume-slider::-webkit-slider-thumb:hover {
+        background: #2563eb;
+        transform: scale(1.1);
+      }
+
+      .volume-slider::-moz-range-thumb {
+        width: 1.25rem;
+        height: 1.25rem;
+        background: #3b82f6;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+      }
+
+      .volume-value {
+        font-size: 0.875rem;
+        color: #64748b;
+        min-width: 3rem;
+        text-align: right;
+      }
+
+      .info-banner {
+        background: linear-gradient(135deg, #1e40af, #3730a3);
+        border-radius: 1rem;
+        padding: 1rem; /* Mobile-first padding */
+        margin-bottom: 1.5rem; /* Mobile-first spacing */
+        border: 1px solid #3b82f6;
+      }
+
+      .info-banner h3 {
+        font-size: 1rem; /* Mobile-optimized */
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .info-banner p {
+        color: #e2e8f0;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      .info-icon {
+        width: 1rem;
+        height: 1rem;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+
+      /* Tablet and up */
+      @media (min-width: 640px) {
+        .stations-grid {
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1.5rem;
+        }
+
+        .container {
+          padding: 1.5rem;
+        }
+
+        .header h1 {
+          font-size: 2.5rem;
+        }
+
+        .header p {
+          font-size: 1.125rem;
+        }
+
+        .player-section {
+          padding: 1.5rem 2rem;
+        }
+      }
+
+      /* Desktop */
+      @media (min-width: 1024px) {
+        body {
+          padding-bottom: 200px;
+        }
+
+        .container {
+          padding: 2rem;
+        }
+
+        .header {
+          margin-bottom: 3rem;
+        }
+
+        .header h1 {
+          font-size: 3rem;
+        }
+
+        .stations-grid {
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        }
+
+        .player-header {
+          margin-bottom: 1.5rem;
+        }
+
+        .controls {
+          margin-bottom: 1.5rem;
+        }
+
+        .current-station {
+          font-size: 1.5rem;
+        }
+
+        .status {
+          font-size: 1rem;
+        }
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>BBC Heaven</h1>
+        <p>"Yeah, baby! International BBC radio that's groovy."</p>
+      </header>
+
+      <div class="search-container">
+        <svg
+          class="search-icon"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          ></path>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          id="searchInput"
+          placeholder="Search stations (e.g., Radio 1, 6 Music, World Service...)"
+        />
+      </div>
+
+      <div class="stations-grid" id="stationsGrid">
+        <!-- Stations will be populated by JavaScript -->
+      </div>
+
+      <div class="info-banner">
+        <h3>
+          <svg
+            class="info-icon"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          International BBC Radio Access
+        </h3>
+        <p>
+          This player uses BBC's modern DASH streaming technology for
+          high-quality audio. These streams are available worldwide following
+          the BBC Sounds international closure.
+        </p>
+      </div>
+
+      <div class="player-section">
+        <div class="player-header">
+          <div class="current-station" id="currentStation">
+            Select a station to begin
+          </div>
+          <div class="status" id="status">
+            <svg
+              class="status-icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            Ready to play
+          </div>
+          <div class="loading" id="loading">
+            <svg
+              class="status-icon animate-spin"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+            Loading stream...
+          </div>
+          <div class="error" id="error"></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn btn-primary" id="playBtn" disabled>
+            <svg
+              class="btn-icon"
+              fill="currentColor"
+              stroke="none"
+              viewBox="0 0 24 24"
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Play
+          </button>
+          <button class="btn btn-secondary" id="stopBtn" disabled>
+            <svg
+              class="btn-icon"
+              fill="currentColor"
+              stroke="none"
+              viewBox="0 0 24 24"
+            >
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+            Stop
+          </button>
+        </div>
+
+        <div class="volume-section">
+          <svg
+            class="volume-icon"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 9v6a1 1 0 001 1h3l5 5V4L9 9H6a1 1 0 00-1 1z"
+            ></path>
+          </svg>
+          <input
+            type="range"
+            class="volume-slider"
+            id="volumeSlider"
+            min="0"
+            max="100"
+            value="70"
+          />
+          <span class="volume-value" id="volumeValue">70%</span>
+        </div>
+      </div>
+    </div>
+
+    <audio id="audioPlayer" preload="none"></audio>
+
+    <script>
+      // BBC Radio stations with current DASH URLs (2025)
+      const stations = [
+        {
+          name: "BBC Radio 1",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_one.mpd",
+          description: "The UK's biggest music radio station",
+        },
+        {
+          name: "BBC Radio 1Xtra",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_1xtra.mpd",
+          description: "Urban music and live events",
+        },
+        {
+          name: "BBC Radio 1 Dance",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_one_dance.mpd",
+          description: "Electronic dance music",
+        },
+        {
+          name: "BBC Radio 2",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_two.mpd",
+          description: "Popular music and culture",
+        },
+        {
+          name: "BBC Radio 3",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_three.mpd",
+          description: "Classical music, jazz, world music",
+        },
+        {
+          name: "BBC Radio 4",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_fourfm.mpd",
+          description: "News, drama, comedy and factual",
+        },
+        {
+          name: "BBC Radio 4 Extra",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_four_extra.mpd",
+          description: "Drama, comedy and entertainment",
+        },
+        {
+          name: "BBC Radio 5 Live",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_five_live.mpd",
+          description: "Live news and sports",
+        },
+        {
+          name: "BBC Radio 6 Music",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_6music.mpd",
+          description: "Alternative music",
+        },
+        {
+          name: "BBC World Service",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_world_service.mpd",
+          description: "International news and current affairs",
+        },
+        {
+          name: "BBC Asian Network",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_asian_network.mpd",
+          description: "Music and culture for British Asian communities",
+        },
+        {
+          name: "BBC Radio Scotland",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_scotland_fm.mpd",
+          description: "Scottish culture, music and news",
+        },
+        {
+          name: "BBC Radio Wales",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_wales_fm.mpd",
+          description: "Welsh culture, music and news",
+        },
+        {
+          name: "BBC Radio Ulster",
+          url: "https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/aks/bbc_radio_ulster.mpd",
+          description: "Northern Ireland's local radio",
+        },
+      ];
+
+      // Application state
+      let currentStationIndex = -1;
+      let isPlaying = false;
+      let dashPlayer = null;
+      let filteredStations = [...stations];
+
+      // DOM elements
+      const audioPlayer = document.getElementById("audioPlayer");
+      const stationsGrid = document.getElementById("stationsGrid");
+      const searchInput = document.getElementById("searchInput");
+      const currentStationEl = document.getElementById("currentStation");
+      const statusEl = document.getElementById("status");
+      const loadingEl = document.getElementById("loading");
+      const errorEl = document.getElementById("error");
+      const playBtn = document.getElementById("playBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const volumeSlider = document.getElementById("volumeSlider");
+      const volumeValue = document.getElementById("volumeValue");
+
+      // Initialize application
+      function init() {
+        renderStations();
+        setupEventListeners();
+        initializeDashPlayer();
+        setVolume();
+      }
+
+      function initializeDashPlayer() {
+        dashPlayer = dashjs.MediaPlayer().create();
+        dashPlayer.initialize();
+      }
+
+      function setupEventListeners() {
+        // Search functionality
+        searchInput.addEventListener("input", handleSearch);
+
+        // Player controls
+        playBtn.addEventListener("click", togglePlayback);
+        stopBtn.addEventListener("click", stopPlayback);
+        volumeSlider.addEventListener("input", setVolume);
+
+        // Audio events
+        audioPlayer.addEventListener("ended", handleAudioEnded);
+        audioPlayer.addEventListener("pause", handleAudioPause);
+        audioPlayer.addEventListener("play", handleAudioPlay);
+      }
+
+      function renderStations() {
+        stationsGrid.innerHTML = filteredStations
+          .map((station, index) => {
+            const originalIndex = stations.findIndex(
+              (s) => s.url === station.url
+            );
+            return `
+                    <div class="station-card" onclick="selectStation(${originalIndex})">
+                        <div class="station-name">${station.name}</div>
+                        <div class="station-description">${station.description}</div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      function handleSearch() {
+        const searchTerm = searchInput.value.toLowerCase();
+        filteredStations = stations.filter(
+          (station) =>
+            station.name.toLowerCase().includes(searchTerm) ||
+            station.description.toLowerCase().includes(searchTerm)
+        );
+        renderStations();
+      }
+
+      function selectStation(index) {
+        // Remove active class from all cards
+        document.querySelectorAll(".station-card").forEach((card) => {
+          card.classList.remove("active");
+        });
+
+        // Add active class to selected card
+        const cards = document.querySelectorAll(".station-card");
+        const filteredIndex = filteredStations.findIndex(
+          (s) => s.url === stations[index].url
+        );
+        if (filteredIndex !== -1 && cards[filteredIndex]) {
+          cards[filteredIndex].classList.add("active");
+        }
+
+        currentStationIndex = index;
+        const station = stations[index];
+
+        currentStationEl.textContent = station.name;
+        updateStatus("Ready to play");
+        hideError();
+
+        // Update document title
+        updateDocumentTitle(station.name, false);
+
+        // Enable controls
+        playBtn.disabled = false;
+
+        // Auto-play if currently playing
+        if (isPlaying) {
+          stopPlayback();
+          setTimeout(() => startPlayback(), 500);
+        }
+      }
+
+      function togglePlayback() {
+        if (!isPlaying) {
+          startPlayback();
+        } else {
+          if (audioPlayer.paused) {
+            resumePlayback();
+          } else {
+            pausePlayback();
+          }
+        }
+      }
+
+      function startPlayback() {
+        if (currentStationIndex === -1) {
+          showError("Please select a station first");
+          return;
+        }
+
+        const station = stations[currentStationIndex];
+        showLoading();
+        hideError();
+
+        try {
+          // Reset any existing playback
+          if (dashPlayer) {
+            dashPlayer.reset();
+          }
+
+          // Attach DASH player to audio element
+          dashPlayer.attachView(audioPlayer);
+          dashPlayer.attachSource(station.url);
+
+          // Set up DASH event listeners
+          setupDashEvents();
+
+          isPlaying = true;
+          stopBtn.disabled = false;
+        } catch (error) {
+          console.error("DASH playback failed:", error);
+          showError(
+            "Failed to initialize DASH stream. Your browser may not support this format."
+          );
+          hideLoading();
+          isPlaying = false;
+        }
+      }
+
+      function setupDashEvents() {
+        dashPlayer.on("streamInitialized", () => {
+          audioPlayer
+            .play()
+            .then(() => {
+              const station = stations[currentStationIndex];
+              updateStatus(`Live: ${station.name}`, true);
+              updatePlayButton(true);
+              updateDocumentTitle(station.name, true);
+              hideLoading();
+            })
+            .catch((error) => {
+              console.error("Audio play failed:", error);
+              showError(
+                "Playback failed. Please try again or select another station."
+              );
+              handlePlaybackError();
+            });
+        });
+
+        dashPlayer.on("error", (e) => {
+          console.error("DASH error:", e);
+          showError(
+            "Stream error occurred. The station might be temporarily unavailable."
+          );
+          handlePlaybackError();
+        });
+      }
+
+      function resumePlayback() {
+        audioPlayer
+          .play()
+          .then(() => {
+            updatePlayButton(true);
+            const station = stations[currentStationIndex];
+            updateStatus(`Live: ${station.name}`, true);
+            updateDocumentTitle(station.name, true);
+          })
+          .catch((error) => {
+            console.error("Resume failed:", error);
+            showError("Failed to resume playback.");
+          });
+      }
+
+      function pausePlayback() {
+        audioPlayer.pause();
+        updatePlayButton(false);
+        updateStatus("Paused");
+        const station = stations[currentStationIndex];
+        updateDocumentTitle(station.name, false);
+      }
+
+      function stopPlayback() {
+        if (dashPlayer) {
+          dashPlayer.reset();
+        }
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+        updateStatus("Stopped");
+        updatePlayButton(false);
+        updateDocumentTitle("BBC Heaven", false);
+        stopBtn.disabled = true;
+        hideLoading();
+      }
+
+      function handlePlaybackError() {
+        hideLoading();
+        isPlaying = false;
+        updatePlayButton(false);
+        stopBtn.disabled = true;
+      }
+
+      function updatePlayButton(playing) {
+        if (playing) {
+          playBtn.innerHTML = `
+                    <svg class="btn-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                    Pause
+                `;
+        } else {
+          playBtn.innerHTML = `
+                    <svg class="btn-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Play
+                `;
+        }
+      }
+
+      function updateStatus(message, isLive = false) {
+        statusEl.textContent = message;
+        statusEl.className = isLive ? "status playing" : "status";
+
+        // Update the icon based on the status
+        const iconHtml = isLive
+          ? `<svg class="status-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                     <circle cx="12" cy="12" r="3"></circle>
+                   </svg>`
+          : `<svg class="status-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                   </svg>`;
+
+        // Replace the entire content of status element
+        statusEl.innerHTML = iconHtml + " " + message;
+      }
+
+      function setVolume() {
+        const volume = volumeSlider.value;
+        audioPlayer.volume = volume / 100;
+        volumeValue.textContent = volume + "%";
+      }
+
+      function showLoading() {
+        loadingEl.style.display = "flex";
+        statusEl.style.display = "none";
+      }
+
+      function hideLoading() {
+        loadingEl.style.display = "none";
+        statusEl.style.display = "flex";
+      }
+
+      function showError(message) {
+        errorEl.textContent = message;
+        errorEl.style.display = "block";
+      }
+
+      function hideError() {
+        errorEl.style.display = "none";
+      }
+
+      // Audio event handlers
+      function handleAudioEnded() {
+        isPlaying = false;
+        updatePlayButton(false);
+        updateStatus("Stream ended");
+        stopBtn.disabled = true;
+      }
+
+      function handleAudioPause() {
+        if (isPlaying) {
+          updatePlayButton(false);
+          updateStatus("Paused");
+        }
+      }
+
+      function handleAudioPlay() {
+        if (isPlaying) {
+          updatePlayButton(true);
+          const station = stations[currentStationIndex];
+          updateStatus(`Live: ${station.name}`, true);
+          updateDocumentTitle(station.name, true);
+        }
+      }
+
+      function updateDocumentTitle(stationName, isPlaying) {
+        if (isPlaying) {
+          document.title = `🔴 ${stationName} - BBC Heaven`;
+        } else if (stationName === "BBC Heaven") {
+          document.title = "BBC Heaven - Radio Player";
+        } else {
+          document.title = `${stationName} - BBC Heaven`;
+        }
+      }
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", () => {
+        if (dashPlayer) {
+          dashPlayer.reset();
+        }
+      });
+
+      // Initialize when page loads
+      window.addEventListener("load", init);
+    </script>
+  </body>
+</html>
