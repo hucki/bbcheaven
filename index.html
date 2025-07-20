@@ -144,6 +144,8 @@
       }
 
       .airplay-icon {
+        width: 42px;
+        height: 42px;
         position: absolute;
         top: 1rem;
         right: 1rem;
@@ -276,62 +278,6 @@
       .btn-icon {
         width: 1.5rem; /* Larger icons for mobile */
         height: 1.5rem;
-      }
-
-      .volume-section {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-      }
-
-      .volume-icon {
-        width: 1.25rem;
-        height: 1.25rem;
-        color: #64748b;
-      }
-
-      .volume-slider {
-        flex: 1;
-        max-width: 200px;
-        height: 0.5rem;
-        background: #334155;
-        border-radius: 0.25rem;
-        outline: none;
-        -webkit-appearance: none;
-        appearance: none;
-      }
-
-      .volume-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 1.25rem;
-        height: 1.25rem;
-        background: #3b82f6;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .volume-slider::-webkit-slider-thumb:hover {
-        background: #2563eb;
-        transform: scale(1.1);
-      }
-
-      .volume-slider::-moz-range-thumb {
-        width: 1.25rem;
-        height: 1.25rem;
-        background: #3b82f6;
-        border-radius: 50%;
-        border: none;
-        cursor: pointer;
-      }
-
-      .volume-value {
-        font-size: 0.875rem;
-        color: #64748b;
-        min-width: 3rem;
-        text-align: right;
       }
 
       .info-banner {
@@ -521,19 +467,6 @@
             Stop
           </button>
         </div>
-
-        <div class="volume-section">
-          <i data-lucide="volume-2" class="volume-icon"></i>
-          <input
-            type="range"
-            class="volume-slider"
-            id="volumeSlider"
-            min="0"
-            max="100"
-            value="70"
-          />
-          <span class="volume-value" id="volumeValue">70%</span>
-        </div>
       </div>
     </div>
 
@@ -637,15 +570,12 @@
       const playBtn = document.getElementById("playBtn");
       const stopBtn = document.getElementById("stopBtn");
       const airplayIcon = document.getElementById("airplayIcon");
-      const volumeSlider = document.getElementById("volumeSlider");
-      const volumeValue = document.getElementById("volumeValue");
 
       // Initialize application
       function init() {
         console.log("Initializing BBC Heaven player...");
         renderStations();
         initializeDashPlayer();
-        setVolume();
         checkAirPlaySupport();
         // Initialize Lucide icons first
         lucide.createIcons();
@@ -800,8 +730,6 @@
         } else {
           console.log("AirPlay icon element not found!");
         }
-
-        volumeSlider.addEventListener("input", setVolume);
 
         // Audio events
         audioPlayer.addEventListener("ended", handleAudioEnded);
@@ -1072,12 +1000,6 @@
         setTimeout(() => {
           applyAirPlayIconVisibility();
         }, 50);
-      }
-
-      function setVolume() {
-        const volume = volumeSlider.value;
-        audioPlayer.volume = volume / 100;
-        volumeValue.textContent = volume + "%";
       }
 
       function showLoading() {
