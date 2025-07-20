@@ -642,12 +642,14 @@
 
       // Initialize application
       function init() {
+        console.log("Initializing BBC Heaven player...");
         renderStations();
         initializeDashPlayer();
         setVolume();
         checkAirPlaySupport();
         // Initialize Lucide icons first
         lucide.createIcons();
+        console.log("Lucide icons initialized");
         // Reapply AirPlay icon state after Lucide processes
         setTimeout(() => {
           applyAirPlayIconVisibility();
@@ -656,6 +658,22 @@
         setTimeout(() => {
           setupEventListeners();
         }, 200);
+      }
+
+      function checkAirPlaySupport() {
+        // Check if AirPlay is supported
+        console.log("Checking AirPlay support...");
+        console.log(
+          "webkitShowPlaybackTargetPicker available:",
+          !!audioPlayer.webkitShowPlaybackTargetPicker
+        );
+
+        if (audioPlayer.webkitShowPlaybackTargetPicker) {
+          // Don't show immediately - will be shown when playing
+          console.log("AirPlay supported but hidden until playback starts");
+        } else {
+          console.log("AirPlay not supported on this device/browser");
+        }
       }
 
       function showAirPlayIcon() {
@@ -684,9 +702,21 @@
         if (airPlayIconVisible) {
           currentAirplayIcon.classList.remove("hidden");
           currentAirplayIcon.style.display = "block";
+          console.log("AirPlay icon shown");
+          console.log(
+            "AirPlay icon classes after show:",
+            currentAirplayIcon.classList.toString()
+          );
+          console.log("Current element:", currentAirplayIcon);
         } else {
           currentAirplayIcon.classList.add("hidden");
           currentAirplayIcon.style.display = "none";
+          console.log("AirPlay icon hidden");
+          console.log(
+            "AirPlay icon classes after hide:",
+            currentAirplayIcon.classList.toString()
+          );
+          console.log("Current element:", currentAirplayIcon);
         }
       }
 
@@ -707,8 +737,24 @@
         const currentAirplayIcon =
           document.getElementById("airplayIcon") ||
           document.querySelector(".airplay-icon");
+        console.log("Setting up AirPlay event listener...");
+        console.log("AirPlay icon element:", currentAirplayIcon);
+        console.log(
+          "AirPlay icon classList:",
+          currentAirplayIcon
+            ? currentAirplayIcon.classList.toString()
+            : "element not found"
+        );
+        console.log(
+          "AirPlay icon innerHTML:",
+          currentAirplayIcon
+            ? currentAirplayIcon.innerHTML
+            : "element not found"
+        );
 
         if (currentAirplayIcon) {
+          console.log("Setting up AirPlay event listeners");
+
           // Remove any existing listeners
           currentAirplayIcon.removeEventListener("click", handleAirPlayClick);
           currentAirplayIcon.removeEventListener(
@@ -749,6 +795,8 @@
             },
             { capture: true }
           );
+
+          console.log("AirPlay event listeners configured");
         } else {
           console.log("AirPlay icon element not found!");
         }
@@ -762,8 +810,17 @@
       }
 
       function handleAirPlayClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
+        console.log("=== AirPlay Click Handler Triggered ===");
+        console.log("Event type:", e ? e.type : "no event");
+        console.log("Event target:", e ? e.target : "no event");
+        console.log("Event currentTarget:", e ? e.currentTarget : "no event");
+
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        console.log("AirPlay icon clicked - event triggered!");
         toggleAirPlay();
       }
 
@@ -931,9 +988,18 @@
       }
 
       function toggleAirPlay() {
+        console.log("toggleAirPlay function called");
+        console.log("Audio player:", audioPlayer);
+        console.log(
+          "webkitShowPlaybackTargetPicker:",
+          audioPlayer.webkitShowPlaybackTargetPicker
+        );
+
         if (audioPlayer.webkitShowPlaybackTargetPicker) {
           try {
+            console.log("Attempting to show AirPlay picker...");
             audioPlayer.webkitShowPlaybackTargetPicker();
+            console.log("AirPlay picker should have opened");
           } catch (error) {
             console.error("AirPlay error:", error);
             showError("Failed to open AirPlay selector: " + error.message);
