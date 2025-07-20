@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BBC Heaven - Radio Player</title>
     <script src="https://cdn.dashjs.org/latest/modern/umd/dash.all.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
       * {
         margin: 0;
@@ -113,14 +114,14 @@
       }
 
       .station-name {
-        font-size: 1.125rem; /* Mobile-optimized */
+        font-size: 1rem; /* Mobile-optimized */
         font-weight: 600;
         margin-bottom: 0.5rem;
         color: #f8fafc;
       }
 
       .station-description {
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         color: #94a3b8;
         line-height: 1.4;
       }
@@ -137,9 +138,41 @@
         background: rgba(30, 41, 59, 0.95);
         backdrop-filter: blur(20px);
         border-top: 1px solid #334155;
-        padding: 1rem; /* Mobile-first padding */
+        padding: 0.5rem; /* Mobile-first padding */
         z-index: 50;
         box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .airplay-icon {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 51;
+        pointer-events: auto;
+        user-select: none;
+        /* Add a larger clickable area while keeping icon size */
+        padding: 0.1rem;
+        margin: -0.5rem;
+        display: block; /* Explicitly set display */
+      }
+
+      .airplay-icon:hover {
+        color: #3b82f6;
+        transform: scale(1.1);
+      }
+
+      .airplay-icon.hidden {
+        display: none !important;
+      }
+
+      .airplay-icon svg {
+        pointer-events: none;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: block;
       }
 
       .player-header {
@@ -202,14 +235,14 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        padding: 1rem 1.5rem; /* Larger touch targets */
+        padding: 0.5rem 0.5rem; /* Larger touch targets */
         border: none;
         border-radius: 0.75rem;
         font-size: 1rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
-        min-width: 120px;
+        min-width: 100px;
         min-height: 48px; /* Ensure good touch targets */
       }
 
@@ -432,19 +465,7 @@
       </header>
 
       <div class="search-container">
-        <svg
-          class="search-icon"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          ></path>
-        </svg>
+        <i data-lucide="search" class="search-icon"></i>
         <input
           type="text"
           class="search-input"
@@ -459,19 +480,7 @@
 
       <div class="info-banner">
         <h3>
-          <svg
-            class="info-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
+          <i data-lucide="info" class="info-icon"></i>
           International BBC Radio Access
         </h3>
         <p>
@@ -482,40 +491,21 @@
       </div>
 
       <div class="player-section">
+        <i
+          data-lucide="airplay"
+          class="airplay-icon hidden"
+          id="airplayIcon"
+        ></i>
         <div class="player-header">
           <div class="current-station" id="currentStation">
-            Select a station to begin
+            Select a station
           </div>
           <div class="status" id="status">
-            <svg
-              class="status-icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
+            <i data-lucide="clock" class="status-icon"></i>
             Ready to play
           </div>
           <div class="loading" id="loading">
-            <svg
-              class="status-icon animate-spin"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              ></path>
-            </svg>
+            <i data-lucide="loader-2" class="status-icon animate-spin"></i>
             Loading stream...
           </div>
           <div class="error" id="error"></div>
@@ -523,43 +513,17 @@
 
         <div class="controls">
           <button class="btn btn-primary" id="playBtn" disabled>
-            <svg
-              class="btn-icon"
-              fill="currentColor"
-              stroke="none"
-              viewBox="0 0 24 24"
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
+            <i data-lucide="play" class="btn-icon"></i>
             Play
           </button>
           <button class="btn btn-secondary" id="stopBtn" disabled>
-            <svg
-              class="btn-icon"
-              fill="currentColor"
-              stroke="none"
-              viewBox="0 0 24 24"
-            >
-              <rect x="6" y="6" width="12" height="12" rx="2" />
-            </svg>
+            <i data-lucide="square" class="btn-icon"></i>
             Stop
           </button>
         </div>
 
         <div class="volume-section">
-          <svg
-            class="volume-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 9v6a1 1 0 001 1h3l5 5V4L9 9H6a1 1 0 00-1 1z"
-            ></path>
-          </svg>
+          <i data-lucide="volume-2" class="volume-icon"></i>
           <input
             type="range"
             class="volume-slider"
@@ -573,7 +537,12 @@
       </div>
     </div>
 
-    <audio id="audioPlayer" preload="none"></audio>
+    <audio
+      id="audioPlayer"
+      preload="none"
+      webkit-playsinline
+      x-webkit-airplay="allow"
+    ></audio>
 
     <script>
       // BBC Radio stations with current DASH URLs (2025)
@@ -655,6 +624,7 @@
       let isPlaying = false;
       let dashPlayer = null;
       let filteredStations = [...stations];
+      let airPlayIconVisible = false; // Track AirPlay icon visibility state
 
       // DOM elements
       const audioPlayer = document.getElementById("audioPlayer");
@@ -666,15 +636,58 @@
       const errorEl = document.getElementById("error");
       const playBtn = document.getElementById("playBtn");
       const stopBtn = document.getElementById("stopBtn");
+      const airplayIcon = document.getElementById("airplayIcon");
       const volumeSlider = document.getElementById("volumeSlider");
       const volumeValue = document.getElementById("volumeValue");
 
       // Initialize application
       function init() {
         renderStations();
-        setupEventListeners();
         initializeDashPlayer();
         setVolume();
+        checkAirPlaySupport();
+        // Initialize Lucide icons first
+        lucide.createIcons();
+        // Reapply AirPlay icon state after Lucide processes
+        setTimeout(() => {
+          applyAirPlayIconVisibility();
+        }, 100);
+        // Set up event listeners after icons are ready
+        setTimeout(() => {
+          setupEventListeners();
+        }, 200);
+      }
+
+      function showAirPlayIcon() {
+        if (audioPlayer.webkitShowPlaybackTargetPicker) {
+          airPlayIconVisible = true;
+          applyAirPlayIconVisibility();
+        }
+      }
+
+      function hideAirPlayIcon() {
+        airPlayIconVisible = false;
+        applyAirPlayIconVisibility();
+      }
+
+      function applyAirPlayIconVisibility() {
+        // Get the current DOM element (Lucide may have replaced it)
+        const currentAirplayIcon =
+          document.getElementById("airplayIcon") ||
+          document.querySelector(".airplay-icon");
+
+        if (!currentAirplayIcon) {
+          console.log("AirPlay icon element not found in DOM");
+          return;
+        }
+
+        if (airPlayIconVisible) {
+          currentAirplayIcon.classList.remove("hidden");
+          currentAirplayIcon.style.display = "block";
+        } else {
+          currentAirplayIcon.classList.add("hidden");
+          currentAirplayIcon.style.display = "none";
+        }
       }
 
       function initializeDashPlayer() {
@@ -689,12 +702,69 @@
         // Player controls
         playBtn.addEventListener("click", togglePlayback);
         stopBtn.addEventListener("click", stopPlayback);
+
+        // AirPlay icon click handler - get current element after Lucide processing
+        const currentAirplayIcon =
+          document.getElementById("airplayIcon") ||
+          document.querySelector(".airplay-icon");
+
+        if (currentAirplayIcon) {
+          // Remove any existing listeners
+          currentAirplayIcon.removeEventListener("click", handleAirPlayClick);
+          currentAirplayIcon.removeEventListener(
+            "mousedown",
+            handleAirPlayClick
+          );
+          currentAirplayIcon.removeEventListener(
+            "touchstart",
+            handleAirPlayClick
+          );
+
+          // Add event listeners with multiple approaches
+          currentAirplayIcon.addEventListener("click", handleAirPlayClick, {
+            capture: true,
+          });
+          currentAirplayIcon.addEventListener("mousedown", handleAirPlayClick, {
+            capture: true,
+          });
+          currentAirplayIcon.addEventListener(
+            "touchstart",
+            handleAirPlayClick,
+            {
+              capture: true,
+              passive: false,
+            }
+          );
+
+          // Also add to the document for event delegation
+          document.addEventListener(
+            "click",
+            function (e) {
+              if (e.target.closest(".airplay-icon")) {
+                console.log("AirPlay click detected via delegation");
+                e.preventDefault();
+                e.stopPropagation();
+                handleAirPlayClick(e);
+              }
+            },
+            { capture: true }
+          );
+        } else {
+          console.log("AirPlay icon element not found!");
+        }
+
         volumeSlider.addEventListener("input", setVolume);
 
         // Audio events
         audioPlayer.addEventListener("ended", handleAudioEnded);
         audioPlayer.addEventListener("pause", handleAudioPause);
         audioPlayer.addEventListener("play", handleAudioPlay);
+      }
+
+      function handleAirPlayClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleAirPlay();
       }
 
       function renderStations() {
@@ -814,6 +884,7 @@
               updateStatus(`Live: ${station.name}`, true);
               updatePlayButton(true);
               updateDocumentTitle(station.name, true);
+              showAirPlayIcon(); // Show AirPlay icon when playing
               hideLoading();
             })
             .catch((error) => {
@@ -842,6 +913,7 @@
             const station = stations[currentStationIndex];
             updateStatus(`Live: ${station.name}`, true);
             updateDocumentTitle(station.name, true);
+            showAirPlayIcon(); // Show AirPlay icon when resuming
           })
           .catch((error) => {
             console.error("Resume failed:", error);
@@ -855,6 +927,21 @@
         updateStatus("Paused");
         const station = stations[currentStationIndex];
         updateDocumentTitle(station.name, false);
+        hideAirPlayIcon(); // Hide AirPlay icon when paused
+      }
+
+      function toggleAirPlay() {
+        if (audioPlayer.webkitShowPlaybackTargetPicker) {
+          try {
+            audioPlayer.webkitShowPlaybackTargetPicker();
+          } catch (error) {
+            console.error("AirPlay error:", error);
+            showError("Failed to open AirPlay selector: " + error.message);
+          }
+        } else {
+          console.log("AirPlay not available");
+          showError("AirPlay is not supported on this device or browser");
+        }
       }
 
       function stopPlayback() {
@@ -868,6 +955,7 @@
         updatePlayButton(false);
         updateDocumentTitle("BBC Heaven", false);
         stopBtn.disabled = true;
+        hideAirPlayIcon(); // Hide AirPlay icon when stopped
         hideLoading();
       }
 
@@ -876,25 +964,28 @@
         isPlaying = false;
         updatePlayButton(false);
         stopBtn.disabled = true;
+        hideAirPlayIcon(); // Hide AirPlay icon on error
       }
 
       function updatePlayButton(playing) {
+        const iconElement = playBtn.querySelector(".btn-icon");
         if (playing) {
           playBtn.innerHTML = `
-                    <svg class="btn-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                        <rect x="6" y="4" width="4" height="16"/>
-                        <rect x="14" y="4" width="4" height="16"/>
-                    </svg>
+                    <i data-lucide="pause" class="btn-icon"></i>
                     Pause
                 `;
         } else {
           playBtn.innerHTML = `
-                    <svg class="btn-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
+                    <i data-lucide="play" class="btn-icon"></i>
                     Play
                 `;
         }
+        // Re-initialize Lucide icons for the new elements
+        lucide.createIcons();
+        // Reapply AirPlay icon state after Lucide processes
+        setTimeout(() => {
+          applyAirPlayIconVisibility();
+        }, 50);
       }
 
       function updateStatus(message, isLive = false) {
@@ -903,15 +994,18 @@
 
         // Update the icon based on the status
         const iconHtml = isLive
-          ? `<svg class="status-icon" fill="currentColor" stroke="none" viewBox="0 0 24 24">
-                     <circle cx="12" cy="12" r="3"></circle>
-                   </svg>`
-          : `<svg class="status-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                   </svg>`;
+          ? `<i data-lucide="radio" class="status-icon"></i>`
+          : `<i data-lucide="clock" class="status-icon"></i>`;
 
         // Replace the entire content of status element
         statusEl.innerHTML = iconHtml + " " + message;
+
+        // Re-initialize Lucide icons for the new elements
+        lucide.createIcons();
+        // Reapply AirPlay icon state after Lucide processes
+        setTimeout(() => {
+          applyAirPlayIconVisibility();
+        }, 50);
       }
 
       function setVolume() {
@@ -945,12 +1039,14 @@
         updatePlayButton(false);
         updateStatus("Stream ended");
         stopBtn.disabled = true;
+        hideAirPlayIcon(); // Hide AirPlay icon when stream ends
       }
 
       function handleAudioPause() {
         if (isPlaying) {
           updatePlayButton(false);
           updateStatus("Paused");
+          hideAirPlayIcon(); // Hide AirPlay icon when paused
         }
       }
 
@@ -960,12 +1056,13 @@
           const station = stations[currentStationIndex];
           updateStatus(`Live: ${station.name}`, true);
           updateDocumentTitle(station.name, true);
+          showAirPlayIcon(); // Show AirPlay icon when playing
         }
       }
 
       function updateDocumentTitle(stationName, isPlaying) {
         if (isPlaying) {
-          document.title = `🔴 ${stationName} - BBC Heaven`;
+          document.title = `🟢 ${stationName} - BBC Heaven`;
         } else if (stationName === "BBC Heaven") {
           document.title = "BBC Heaven - Radio Player";
         } else {
